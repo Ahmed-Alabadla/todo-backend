@@ -10,17 +10,18 @@ const taskSchema = new Schema(
     },
     description: {
       type: String,
+      required: true,
     },
     status: {
       type: String,
       enum: ["pending", "in-progress", "completed"],
       default: "pending",
     },
-    // userId: {
-    //   type: mongoose.Schema.Types.ObjectId, // Refers to the User model
-    //   ref: 'User',
-    //   required: true, // This ensures that every task is associated with a user
-    // },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId, // Refers to the User model
+      ref: "User",
+      required: true, // This ensures that every task is associated with a user
+    },
   },
   { timestamps: true }
 );

@@ -3,14 +3,17 @@ const Task = require("../models/Task");
 // ========== CREATE TASK ==========
 const createTask = async (req, res) => {
   try {
-    const { title, description, status } = req.body;
-    // const userId = req.user._id; // Assuming the authenticated user ID is available
+    const { title, description } = req.body;
 
+    // Ensure userId is available after authentication
+    const userId = req.user._id; // req.user should be set by authMiddleware
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" }); // User not authenticated
+    }
     const task = new Task({
       title,
       description,
-      status,
-      // userId, // Associate task with the logged-in user
+      userId, // Associate task with the logged-in user
     });
 
     await task.save();
@@ -24,10 +27,11 @@ const createTask = async (req, res) => {
 // ========== GET TASKS ==========
 const getTasks = async (req, res) => {
   try {
-    // const userId = req.user._id; // Get the logged-in user's ID
-
-    // const tasks = await Task.find({ userId }); // Find tasks only for the logged-in user
-    const tasks = await Task.find(); // Find tasks only for the logged-in user
+    const userId = req.user._id; // Get the logged-in user's ID
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" }); // User not authenticated
+    }
+    const tasks = await Task.find({ userId }); // Find tasks only for the logged-in user
 
     res.status(200).json(tasks);
   } catch (error) {
@@ -38,12 +42,14 @@ const getTasks = async (req, res) => {
 // ========== UPDATE TASK ==========
 const updateTask = async (req, res) => {
   try {
-    // const userId = req.user._id; // Get the logged-in user's ID
+    const userId = req.user._id; // Get the logged-in user's ID
     const { taskId } = req.params;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" }); // User not authenticated
+    }
 
     // Find the task and ensure it belongs to the user
-    // const task = await Task.findOne({ _id: taskId, userId });
-    const task = await Task.findByIdAndUpdate(taskId);
+    const task = await Task.findOne({ _id: taskId, userId });
 
     if (!task) {
       return res
@@ -64,12 +70,13 @@ const updateTask = async (req, res) => {
 // ========== DELETE TASK ==========
 const deleteTask = async (req, res) => {
   try {
-    // const userId = req.user._id; // Get the logged-in user's ID
+    const userId = req.user._id; // Get the logged-in user's ID
     const { taskId } = req.params;
-
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" }); // User not authenticated
+    }
     // Find the task and ensure it belongs to the user
-    // const task = await Task.findOneAndDelete({ _id: taskId, userId });
-    const task = await Task.findByIdAndDelete(taskId);
+    const task = await Task.findOneAndDelete({ _id: taskId, userId });
 
     if (!task) {
       return res
