@@ -13,6 +13,7 @@ const {
   changeName,
   changePassword,
   deleteUser,
+  getUser,
 } = require("./controllers/userController");
 
 const authMiddleware = require("./middleware/auth");
@@ -55,6 +56,7 @@ app.put("/api/change-password", authMiddleware, changePassword);
 
 // ============ USER ENDPOINT ============
 app.get("/api/users", getUsers);
+app.get("/api/profile", authMiddleware, getUser);
 app.delete("/api/user", authMiddleware, deleteUser);
 
 // start the Express server
