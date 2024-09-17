@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User"); // Import User model
+const bcrypt = require("bcryptjs");
 
 const getUsers = async (req, res) => {
   try {
@@ -81,48 +82,69 @@ const changePassword = async (req, res) => {
   const { old_password, new_password } = req.body;
 
   try {
-    const userId = req.user._id; // Get the logged-in user's ID
+    const userId = req.user._id;
 
-    const user = await User.findById(userId);
+    // Find the user by their ID and select the password field
+    const user = await User.findById(userId).select("+password");
 
-    // Check if the password is correct
-    const isMatch = await user.comparePassword(old_password);
-
-    if (!isMatch) {
-      return res.status(401).json({ message: "Invalid password" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // Update the password
-    Object.assign(user, { password: new_password });
+    // Check if the old password matches
+    const isMatch = await user.comparePassword(old_password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid old password" });
+    }
+
+    // Hash the new password before saving
+    // const hashedPassword = await bcrypt.hash(new_password, 10);
+    // user.password = hashedPassword;
+    user.password = new_password;
+
+    // Save the updated user with the new hashed password
     await user.save();
 
     res.status(200).json({ message: "Password updated successfully" });
   } catch (error) {
+    console.error("Error changing password: ", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// =========== CHANGE NAME ===========
+// ========== CHANGE NAME ==========
 const changeName = async (req, res) => {
-  const { password, new_name } = req.body;
+  const { new_name, password } = req.body;
 
   try {
-    const userId = req.user._id; // Get the logged-in user's ID
+    const userId = req.user._id; // Assuming userId is set by authentication middleware
 
-    const user = await User.findById(userId);
+    // Find the user by their ID and select the password field
+    const user = await User.findById(userId).select("+password");
 
-    // Check if the password is correct
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the provided password matches the stored password
     const isMatch = await user.comparePassword(password);
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // Update the password
-    Object.assign(user, { name: new_name });
+    // Update the user's name
+    user.name = new_name;
     await user.save();
 
-    res.status(200).json({ message: "Password updated successfully" });
+    res.status(200).json({
+      message: "Name updated successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        createdAt: user.createdAt,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
